@@ -41,13 +41,15 @@ theme_set(theme_minimal())
 
 ```{r}
 accidents <- read_csv("US_Accidents_Dec21_updated.csv") %>% 
-  mutate(state_name = state.name[match(State, state.abb)]) %>%
-  mutate(state_name = str_to_lower(state_name))
+  mutate(state = state.name[match(State, state.abb)]) %>%
+  mutate(state = str_to_lower(state_name))
 
 census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_census_2018_state_pop_est.csv?dl=1") %>% 
   separate(state, into = c("dot","state"), extra = "merge") %>% 
   select(-dot) %>% 
   mutate(state = str_to_lower(state))
+
+left_join(accidents, census_pop_est_2018, by = state)
 ```
 
 
