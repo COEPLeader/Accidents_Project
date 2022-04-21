@@ -120,11 +120,88 @@ ggplot() +
   theme_void()
 ```
 
+```{r}
+big_streets_la <- getbb("California USA") %>%
+  opq(timeout = 100) %>%
+  add_osm_feature(key = "highway", 
+                  value = c("motorway")) %>%
+  osmdata_sf()
+```
 
 
 
+```{r}
+ggplot() +
+  geom_sf(data = big_streets_la$osm_lines,
+          inherit.aes = FALSE,
+          color = "red",
+          size = .5,
+          alpha = .6)
+```
+
+```{r}
+census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_census_2018_state_pop_est.csv?dl=1") %>% 
+  separate(state, into = c("dot","state"), extra = "merge") %>% 
+  select(-dot) %>% 
+  mutate(state = str_to_lower(state))
+```
 
 
+```{r}
+accidents %>%
+  group_by(State, City) %>%
+  summarize(num_accidents = n()) %>%
+  arrange(desc(num_accidents))
+```
 
+```{r}
+accidents <- read_csv("US_Accidents_Dec21_updated.csv") %>%
+  mutate(state = state.name[match(State, state.abb)]) %>%
+  mutate(state = str_to_lower(state))
+
+census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_census_2018_state_pop_est.csv?dl=1") %>% 
+  separate(state, into = c("dot","state"), extra = "merge") %>% 
+  select(-dot) %>% 
+  mutate(state = str_to_lower(state))
+```
+
+```{r}
+accidents <- left_join(accidents, census_pop_est_2018)
+```
+
+
+```{r}
+states_map <- map_data("state")
+```
+
+```{r}
+accidents %>%
+  filter(is.na(state)==FALSE) %>%
+  group_by(state) %>%
+  mutate(num_accidents = n()) %>%
+  mutate(accidents_per_10000 = (num_accidents/est_pop_2018)*10000) %>%
+  select(state, accidents_per_10000) %>%
+  unique() %>%
+  arrange(desc(accidents_per_10000)) %>%
+  ggplot() +
+  geom_map(map = states_map, aes(map_id = state, fill = accidents_per_10000)) +
+  expand_limits(x = states_map$long, y = states_map$lat) + 
+  theme_map() +
+  labs(title = "Number of Car Accidents per 1000 from 2016-2021")
+```
+
+```{r}
+accidents %>% 
+  filter(is.na(state)==FALSE) %>%
+  group_by(state) %>%
+  mutate(num_accidents = n()) %>%
+  mutate(accidents_per_10000 = (num_accidents/est_pop_2018)*10000) %>%
+  select(state, accidents_per_10000) %>%
+  unique() %>%
+  arrange(desc(accidents_per_10000)) %>% 
+  ggplot(aes(x = accidents_per_10000, y = fct_reorder(state, accidents_per_10000))) +
+  geom_bar(stat = "identity") +
+  labs(y = "", x = "", title = "Total Car Accidents per 10000 Residents, 2016-2021")
+```
 
 
