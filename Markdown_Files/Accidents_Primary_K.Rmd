@@ -42,23 +42,25 @@ theme_set(theme_minimal())
 ```{r}
 accidents <- read_csv("US_Accidents_Dec21_updated.csv") %>% 
   mutate(state = state.name[match(State, state.abb)]) %>%
-  mutate(state = str_to_lower(state_name))
+  mutate(state = str_to_lower(state))
 
-census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_census_2018_state_pop_est.csv?dl=1") %>% 
+census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_census_2018_state_pop_est.csv?dl=1") %>%
   separate(state, into = c("dot","state"), extra = "merge") %>% 
   select(-dot) %>% 
   mutate(state = str_to_lower(state))
+```
 
-left_join(accidents, census_pop_est_2018, by = state)
+```{r}
+census_accidents <- left_join(accidents, census_pop_est_2018)
 ```
 
 
 ```{r, fig.width=10, fig.height=8, fig.alt="Total car accidents in each US state between 2016 and 2021."}
-accidents %>% 
-  group_by(State) %>% 
-  summarise(total_accidents = n()) %>% 
-  ggplot(aes(x = total_accidents, y = fct_reorder(State, total_accidents))) +
+census_accidents %>% 
+  group_by(state) %>% 
+  summarise(total_accidents_adjusted = n()/mean(est_pop_2018)) %>% 
+  ungroup() %>% 
+  ggplot(aes(y = fct_reorder(state, total_accidents_adjusted), x = total_accidents_adjusted)) +
   geom_bar(stat = "identity") +
-  scale_x_continuous(labels = comma) +
   labs(y = "", x = "", title = "Total Car Accidents 2016-2021")
 ```
