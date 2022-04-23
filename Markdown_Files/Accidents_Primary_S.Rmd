@@ -34,6 +34,7 @@ library(patchwork)     # for nicely combining ggplot2 graphs
 library(gt)            # for creating nice tables
 library(rvest)         # for scraping data
 library(robotstxt)     # for checking if you can scrape data
+library(osmdata)
 theme_set(theme_minimal())
 ```
 
@@ -46,29 +47,68 @@ theme_set(theme_minimal())
 ```
 
 ```{r}
+big_streets <- getbb(viewbox = )%>%
+  opq(timeout = 100)%>%
+  add_osm_feature(key = "highway", 
+                  value = c("motorway", "primary", "motorway_link", "primary_link")) %>%
+  osmdata_sf()
+```
+
+
+```{r}
   accidents_data_LA <- accidents_data %>% 
-    filter((Start_Lng >= -118.9655) & (Start_Lng <= -117.3367) & (Start_Lat >= 33.6818) & (Start_Lat <= 34.4395))
+    filter((Start_Lng >= -118.9655) & (Start_Lng <= -117.3367) & (Start_Lat >= 33.6818) & (Start_Lat <= 34.4395)) %>%
+  select(Start_Lat:End_Lng)
 
   accidents_data_stpaul <- accidents_data %>% 
     filter(City == "Saint Paul")
+```
 
-  stpaul <- get_stamenmap(
+```{r}
+  stpaul_map <- get_stamenmap(
     bbox = c(left = -93.7601 , bottom = 44.6271, right = -92.1313, top = 45.2744), 
     maptype = "terrain",
     zoom = 10)
-  
+```  
+
+```{r}
+CA_map <- map_data("county", region = "california")
+```
+
+```{r}
   LA_map <- get_stamenmap(
-    bbox = c(left = -118.9655 , bottom = 33.6818, right = -117.3367, top = 34.4395), 
-    maptype = "terrain",
-    zoom = 10)
-  
-  ggmap(stpaul) +
+     bbox = c(left = -118.9655 , bottom = 33.6818, right = -117.3367, top = 34.4395), 
+     maptype = "labels",
+     zoom = 9)
+```
+
+```{r}
+  ggmap(stpaul_map) +
     geom_point(data = accidents_data_stpaul, 
                aes(x = Start_Lng,
                    y = Start_Lat))
-  
+```
+
+```{r}
   ggmap(LA_map) +
     geom_point(data = accidents_data_LA, 
                aes(x = Start_Lng,
-                   y = Start_Lat))
+                   y = Start_Lat),
+               size = .2,
+               alpha = .1,
+               color = "red") +
+  geom_sf(data = big_streets$osm_lines,
+          inherit.aes = FALSE,
+          color = "green",
+          size = .1,
+          alpha = .9)
+  
 ```
+
+```{r}
+  ggplot() +
+    geom_map(map = CA_map,
+             aes(map_id = subregion))
+```
+
+
