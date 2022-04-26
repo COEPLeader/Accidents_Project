@@ -83,7 +83,7 @@ big_streets <- opq(bbox = c(-118.965,33.6818,-117.3367,34.4395), timeout = 100)%
 ```{r}
 CA_map <- map_data("county", region = "california")
 ```
-
+ 
 ```{r}
   LA_map <- get_stamenmap(
      bbox = c(left = -118.9655 , bottom = 33.6818, right = -117.3367, top = 34.4395), 
