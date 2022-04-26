@@ -42,15 +42,24 @@ theme_set(theme_minimal())
 #knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
 ```
 
+#Introduction
+  In our search for an interesting dataset to analyze we cam across a wonderfully organized table detailing traffic accidents in the contiguous United States over the last 5 years. What caught our interest in specific was looking at the evolution over time of crash statistics in specific states- most notably California. As the graph below shows, the number of accidents in California has been doubling each year, and we wanted to figure out just what was happening. The dataset we're working with is extraordinarily large, containing over 2.8 million accidents taken from automated traffic sensors and logged reports. Each accident has 47 columns of information.
+
 ```{r, cache = TRUE}
-  accidents_data <- read.csv("C:/Users/coeps/OneDrive/Pictures/Documents/COMP_112/Accidents_Project/local/US_Accidents_Dec21_updated.csv")
+  accidents_data <- read.csv("local/US_Accidents_Dec21_updated.csv")
 ```
 
 ```{r}
-big_streets <- getbb(viewbox = )%>%
-  opq(timeout = 100)%>%
+big_streets <- opq(bbox = c(-118.965,33.6818,-117.3367,34.4395), timeout = 100)%>%
   add_osm_feature(key = "highway", 
                   value = c("motorway", "primary", "motorway_link", "primary_link")) %>%
+  osmdata_sf()
+```
+
+```{r}
+  thoroughfares <- opq(bbox = c(-118.965,33.6818,-117.3367,34.4395), timeout = 100)%>%
+  add_osm_feature(key = "highway", 
+                  value = c("motorway", "primary")) %>%
   osmdata_sf()
 ```
 
@@ -78,8 +87,8 @@ CA_map <- map_data("county", region = "california")
 ```{r}
   LA_map <- get_stamenmap(
      bbox = c(left = -118.9655 , bottom = 33.6818, right = -117.3367, top = 34.4395), 
-     maptype = "labels",
-     zoom = 9)
+     maptype = "toner-lite",
+     zoom = 8)
 ```
 
 ```{r}
@@ -102,7 +111,21 @@ CA_map <- map_data("county", region = "california")
           color = "green",
           size = .1,
           alpha = .9)
-  
+```
+
+```{r}
+  ggmap(LA_map) +
+    geom_point(data = accidents_data_LA, 
+               aes(x = Start_Lng,
+                   y = Start_Lat),
+               size = .2,
+               alpha = .1,
+               color = "red") +
+  geom_sf(data = thoroughfares$osm_lines,
+          inherit.aes = FALSE,
+          color = "green",
+          size = .1,
+          alpha = .9)
 ```
 
 ```{r}
