@@ -64,3 +64,14 @@ census_accidents %>%
   geom_bar(stat = "identity") +
   labs(y = "", x = "", title = "Total Car Accidents 2016-2021")
 ```
+
+```{r, fig.width=10, fig.height=8, fig.alt="Total car accidents in each Califronia county between 2016 and 2021."}
+census_accidents %>% 
+  filter(State == "CA") %>% 
+  group_by(County) %>% 
+  summarise(total_accidents = n()) %>% 
+  ungroup() %>% 
+  ggplot(aes(y = fct_reorder(County, total_accidents), x = total_accidents)) +
+  geom_bar(stat = "identity") +
+  labs(y = "", x = "", title = "Total Car Accidents in California by County 2016-2021")
+```
