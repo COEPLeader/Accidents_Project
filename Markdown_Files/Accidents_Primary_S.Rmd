@@ -177,7 +177,7 @@ ggsave(filename = "images/LA_bigstreets.png", LA_bigstreets)
     mutate(rank = 1:n()) %>% 
   ggplot(aes(x = factor(rank), y = count)) +
     geom_col() +
-    geom_text(aes(label = type), hjust = .1)+
+    geom_text(aes(label = type +))+
     transition_states(Year)
 ```
 
