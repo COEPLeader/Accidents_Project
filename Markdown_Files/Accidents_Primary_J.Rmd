@@ -155,42 +155,6 @@ accidents %>%
 ```
 
 ```{r}
-accidents <- read_csv("US_Accidents_Dec21_updated.csv") %>%
-  mutate(state = state.name[match(State, state.abb)]) %>%
-  mutate(state = str_to_lower(state))
-
-census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_census_2018_state_pop_est.csv?dl=1") %>% 
-  separate(state, into = c("dot","state"), extra = "merge") %>% 
-  select(-dot) %>% 
-  mutate(state = str_to_lower(state))
-```
-
-```{r}
-accidents <- left_join(accidents, census_pop_est_2018)
-```
-
-
-```{r}
-states_map <- map_data("state")
-```
-
-```{r}
-accidents %>%
-  filter(is.na(state)==FALSE) %>%
-  group_by(state) %>%
-  mutate(num_accidents = n()) %>%
-  mutate(accidents_per_10000 = (num_accidents/est_pop_2018)*10000) %>%
-  select(state, accidents_per_10000) %>%
-  unique() %>%
-  arrange(desc(accidents_per_10000)) %>%
-  ggplot() +
-  geom_map(map = states_map, aes(map_id = state, fill = accidents_per_10000)) +
-  expand_limits(x = states_map$long, y = states_map$lat) + 
-  theme_map() +
-  labs(title = "Number of Car Accidents per 1000 from 2016-2021")
-```
-
-```{r}
 accidents %>% 
   filter(is.na(state)==FALSE) %>%
   group_by(state) %>%
@@ -203,5 +167,108 @@ accidents %>%
   geom_bar(stat = "identity") +
   labs(y = "", x = "", title = "Total Car Accidents per 10000 Residents, 2016-2021")
 ```
+
+
+
+
+Relevant Graphs
+
+
+
+
+
+
+```{r}
+accidents <- read_csv("US_Accidents_Dec21_updated.csv")
+
+states_map <- map_data("state")
+```
+
+```{r}
+accidents_clean <- accidents %>%
+  mutate(state = state.name[match(State, state.abb)]) %>%
+  mutate(state = str_to_lower(state)) %>%
+  filter(is.na(state)==FALSE) %>%
+  mutate(year = substring(Start_Time, 0, 4))
+```
+
+
+```{r}
+accidents_anim <- accidents %>%
+  group_by(state, year) %>%
+  mutate(num_accidents = n()) %>%
+  select(state, year, num_accidents) %>%
+  unique() %>%
+  arrange(year) %>%
+  ungroup() %>%
+  add_row(year = "2017", state = "north dakota", num_accidents = 0) %>%
+  ggplot() +
+  geom_map(map = states_map, aes(map_id = state, fill = num_accidents, group = year)) +
+  expand_limits(x = states_map$long, y = states_map$lat) + 
+  theme_map() +
+  labs(title = "Number of Car Accidents by State, 2016-2021", subtitle = "Year: {closest_state}", fill = "Number of Accidents") +
+  transition_states(year)
+```
+
+```{r}
+animate(accidents_anim)
+```
+
+```{r}
+accidents_ca <- accidents_clean %>%
+  filter(State == "CA")
+```
+
+```{r}
+accidents_ca %>%
+  filter(is.na(Sunrise_Sunset)==FALSE) %>%
+  group_by(year) %>%
+  mutate(num_accidents = n()) %>%
+  ungroup() %>%
+  group_by(year, Sunrise_Sunset) %>%
+  mutate(percent_day_night = n()/num_accidents) %>%
+  ungroup() %>%
+  select(percent_day_night, year, Sunrise_Sunset) %>%
+  unique() %>%
+  ggplot() +
+  geom_col(aes(x = year, y = percent_day_night, fill = Sunrise_Sunset)) +
+  labs(title = "Percent of Day/Night Accidents in California by Year", fill = "Time of Day") +
+  ylab("")
+```
+
+```{r}
+accidents_ca %>%
+  filter(is.na(Weather_Condition)==FALSE) %>%
+  group_by(year) %>%
+  mutate(num_accidents = n()) %>%
+  ungroup() %>%
+  group_by(year, Weather_Condition) %>%
+  mutate(percent_weather = n()/num_accidents) %>%
+  filter(percent_weather>.01) %>%
+  ungroup() %>%
+  select(percent_weather, year, Weather_Condition) %>%
+  unique() %>%
+  group_by(year) %>%
+  mutate(other = 1-sum(percent_weather)) %>%
+  ungroup() %>%
+  add_row(year = "2016", Weather_Condition = "Other", percent_weather = 0.02103897) %>%
+  add_row(year = "2017", Weather_Condition = "Other", percent_weather = 0.02290385) %>%
+  add_row(year = "2018", Weather_Condition = "Other", percent_weather = 0.02343750) %>%
+  add_row(year = "2019", Weather_Condition = "Other", percent_weather = 0.03828895) %>%
+  add_row(year = "2020", Weather_Condition = "Other", percent_weather = 0.03021382) %>%
+  add_row(year = "2021", Weather_Condition = "Other", percent_weather = 0.03736665) %>%
+  ggplot() +
+  geom_col(aes(x = "", y = percent_weather, fill = Weather_Condition)) +
+  coord_polar("y", start = 0) +
+  facet_wrap(vars(year)) +
+  labs(title = "Types of Weather During Accidents in California by Year", fill = "Weather") +
+  theme_void()
+```
+
+
+
+
+
+
 
 
