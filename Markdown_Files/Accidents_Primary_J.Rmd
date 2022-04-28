@@ -194,7 +194,7 @@ accidents_clean <- accidents %>%
 
 
 ```{r}
-accidents_anim <- accidents %>%
+accidents %>%
   group_by(state, year) %>%
   mutate(num_accidents = n()) %>%
   select(state, year, num_accidents) %>%
