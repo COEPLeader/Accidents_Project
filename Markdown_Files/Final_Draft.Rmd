@@ -10,11 +10,11 @@ output:
     code_download: true
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
 ```
 
-```{r libraries}
+```{r libraries, echo=FALSE}
 library(tidyverse)
 library(lubridate)
 library(openintro)
@@ -33,12 +33,12 @@ library(reticulate)
 theme_set(theme_minimal())
 ```
 
-```{r, cache = TRUE}
+```{r, echo=FALSE}
 accidents_data <- read_csv("US_Accidents_Dec21_updated.csv")
 states_map <- map_data("state")
 ```
 
-```{r, cache = TRUE}
+```{r, echo=FALSE}
 accidents_clean <- accidents_data %>%
   mutate(state = state.name[match(State, state.abb)]) %>%
   mutate(state = str_to_lower(state)) %>%
@@ -46,7 +46,7 @@ accidents_clean <- accidents_data %>%
   mutate(year = substring(Start_Time, 0, 4))
 ```  
 
-```{r, cache = TRUE}
+```{r, echo=FALSE}
 accidents_ca <- accidents_clean %>%
   filter(State == "CA")
 ```
@@ -54,7 +54,7 @@ accidents_ca <- accidents_clean %>%
 #Introduction
   In our search for an interesting dataset to analyze we came across a wonderfully organized table detailing traffic accidents in the contiguous United States over the last 5 years. What caught our interest in specific was looking at the evolution over time of crash statistics in specific states- most notably California. As the graph below shows, the number of accidents in California has been doubling each year, and we wanted to figure out just what was happening. The dataset we're working with is extraordinarily large, containing over 2.8 million accidents taken from automated traffic sensors and logged reports. Each accident has 47 columns of information.
 
-```{r, cache = TRUE, eval=FALSE}
+```{r, eval=FALSE, echo=FALSE}
 accidents_clean %>%
   group_by(state, year) %>%
   mutate(num_accidents = n()) %>%
@@ -65,14 +65,18 @@ accidents_clean %>%
   add_row(year = "2017", state = "north dakota", num_accidents = 0) %>%
   ggplot() +
   geom_map(map = states_map, aes(map_id = state, fill = num_accidents, group = year)) +
+  scale_fill_continuous(labels = scales::comma) +
   expand_limits(x = states_map$long, y = states_map$lat) + 
   theme_map() +
   labs(title = "Number of Car Accidents by State, 2016-2021", subtitle = "Year: {closest_state}", fill = "Number of Accidents") +
   transition_states(year)
 ```
 
-```{r, cache = TRUE}
+```{r, echo=FALSE}
 anim_save("accidents.gif")
+```
+
+```{r, echo=FALSE}
 knitr::include_graphics("accidents.gif")
 ```
 
@@ -83,7 +87,7 @@ knitr::include_graphics("accidents.gif")
 
 So, what would cause this pattern? The dataset we found had columns for factors such as whether the accident was in the day or the night, what the temperature and weather were like, and the type of accident. Time of day is a big factor in how often accidents occur, even though that effect is mitigated by the fact that fewer people are driving later in the day. We decided to look at the proportion of day to night accidents, still not expecting too much of a correlation.
 
-```{r, cache = TRUE}
+```{r, echo=FALSE}
 accidents_ca %>%
   filter(is.na(Sunrise_Sunset)==FALSE) %>%
   group_by(year) %>%
@@ -96,15 +100,20 @@ accidents_ca %>%
   unique() %>%
   ggplot() +
   geom_col(aes(x = year, y = percent_day_night, fill = Sunrise_Sunset)) +
-  labs(title = "Percent of Day/Night Accidents in California by Year", fill = "Time of Day", y = "Year") +
-  ylab("")
+  labs(title = "Percent of Day/Night Accidents in California by Year", fill = "Time of Day") +
+  ylab("") +
+  scale_fill_brewer(palette = "Spectral")
 ```
 
 Oddly enough, we do see an increase in the proportion of night accidents over the last 3 years. 
 
-```{r, cache = TRUE}
+```{r, echo=FALSE}
 accidents_ca %>%
   filter(is.na(Weather_Condition)==FALSE) %>%
+  mutate(Weather_Condition = case_when(Weather_Condition == "Fair" ~ "Clear", TRUE ~ Weather_Condition)) %>%
+  mutate(Weather_Condition = case_when(Weather_Condition == "Mostly Cloudy" | Weather_Condition == "Partly Cloudy" | Weather_Condition == "Scattered Clouds" | Weather_Condition == "Overcast" ~ "Cloudy", TRUE ~ Weather_Condition)) %>%
+  mutate(Weather_Condition = case_when(Weather_Condition == "Light Rain" ~ "Rain", TRUE ~ Weather_Condition)) %>%
+  mutate(Weather_Condition = case_when(Weather_Condition == "Haze" ~ "Fog", TRUE ~ Weather_Condition)) %>%
   group_by(year) %>%
   mutate(num_accidents = n()) %>%
   ungroup() %>%
@@ -117,20 +126,22 @@ accidents_ca %>%
   group_by(year) %>%
   mutate(other = 1-sum(percent_weather)) %>%
   ungroup() %>%
-  add_row(year = "2016", Weather_Condition = "Other", percent_weather = 0.02103897) %>%
-  add_row(year = "2017", Weather_Condition = "Other", percent_weather = 0.02290385) %>%
-  add_row(year = "2018", Weather_Condition = "Other", percent_weather = 0.02343750) %>%
-  add_row(year = "2019", Weather_Condition = "Other", percent_weather = 0.03828895) %>%
-  add_row(year = "2020", Weather_Condition = "Other", percent_weather = 0.03021382) %>%
-  add_row(year = "2021", Weather_Condition = "Other", percent_weather = 0.03736665) %>%
+  add_row(year = "2016", Weather_Condition = "Other", percent_weather = 0.004769235) %>%
+  add_row(year = "2017", Weather_Condition = "Other", percent_weather = 0.012130665) %>%
+  add_row(year = "2018", Weather_Condition = "Other", percent_weather = 0.010170991) %>%
+  add_row(year = "2019", Weather_Condition = "Other", percent_weather = 0.024589149) %>%
+  add_row(year = "2020", Weather_Condition = "Other", percent_weather = 0.030213815) %>%
+  add_row(year = "2021", Weather_Condition = "Other", percent_weather = 0.037366646) %>%
   ggplot() +
-  geom_col(aes(x = "", y = percent_weather, fill = Weather_Condition)) +
+  geom_col(aes(x = "", y = percent_weather, fill = fct_relevel(Weather_Condition, "Other", after = Inf))) +
   coord_polar("y", start = 0) +
   facet_wrap(vars(year)) +
   labs(title = "Types of Weather During Accidents in California by Year", fill = "Weather") +
-  theme_void()
+  theme_void() + 
+  scale_fill_brewer(palette = "Spectral")
 ```
 
+While there is an increase in proportion of Clear weather accidents over the past 3 years, there's no indication that this is correlated with the increase in accidents.
   
 ```{r, cache = TRUE}
 big_streets <- opq(bbox = c(-118.965,33.6818,-117.3367,34.4395), timeout = 100)%>%
