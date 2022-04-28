@@ -76,6 +76,35 @@ anim_save("accidents.gif")
 knitr::include_graphics("accidents.gif")
 ```
 
+```{r, cache = TRUE}
+CA_map <- map_data("county", region = "california") %>%
+  rename(state = region, region = subregion) %>%
+  mutate(region = str_to_title(region))
+```
+
+```{r}
+accidents_clean %>%
+  filter(State == "CA") %>%
+  group_by(County) %>%
+  summarise(total_accidents = n()) %>%
+  ungroup() %>%
+  ggplot() +
+  geom_map(map = CA_map, aes(map_id = County, fill = total_accidents)) +
+  expand_limits(x = CA_map$long, y = CA_map$lat) +
+  labs(x = "", y = "", fill = "Total Accidents", title = "Accidents by County 2016-2021")
+```
+
+```{r, echo = FALSE, cache = TRUE, , fig.width=10, fig.height=8, fig.alt="Total car accidents in each Califronia county between 2016 and 2021."}
+accidents_clean %>%
+  filter(State == "CA") %>%
+  group_by(County) %>%
+  summarise(total_accidents = n()) %>%
+  ungroup() %>%
+  ggplot(aes(y = fct_reorder(County, total_accidents), x = total_accidents)) +
+  geom_bar(stat = "identity") +
+  labs(y = "", x = "", title = "Total Car Accidents in California by County 2016-2021")
+```
+
 #Data Collection
   Our Data Collection process was pretty simple- we found the data set on [https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents]() and downloaded the csv file. We did run into some issues using this csv, however due to its sheer size (1.1 GB).
 

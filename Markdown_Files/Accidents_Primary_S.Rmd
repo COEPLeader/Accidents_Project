@@ -164,4 +164,21 @@ ggsave(filename = "images/LA_bigstreets.png", LA_bigstreets)
              aes(map_id = subregion))
 ```
 
+```{r, fig.width = 10, fig.height = 8}
+  accidents_data_LA %>% 
+    mutate(Year = year(Start_Time)) %>% 
+    group_by(Year) %>% 
+    mutate(across(Amenity:Turning_Loop, ~ . == "True")) %>% 
+    summarize(across(Amenity:Turning_Loop,sum)) %>% 
+    pivot_longer(Amenity:Turning_Loop, values_to = "count", names_to = "type") %>% 
+    group_by(Year) %>% 
+    slice_max(count, n = 5) %>% 
+    arrange(Year) %>% 
+    mutate(rank = 1:n()) %>% 
+  ggplot(aes(x = factor(rank), y = count)) +
+    geom_col() +
+    geom_text(aes(label = type), hjust = .1)+
+    transition_states(Year)
+```
+
 
