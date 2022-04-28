@@ -47,7 +47,7 @@ theme_set(theme_minimal())
   In our search for an interesting dataset to analyze we cam across a wonderfully organized table detailing traffic accidents in the contiguous United States over the last 5 years. What caught our interest in specific was looking at the evolution over time of crash statistics in specific states- most notably California. As the graph below shows, the number of accidents in California has been doubling each year, and we wanted to figure out just what was happening. The dataset we're working with is extraordinarily large, containing over 2.8 million accidents taken from automated traffic sensors and logged reports. Each accident has 47 columns of information.
 
 ```{r, cache = TRUE}
-  accidents_data <- read.csv("local/US_Accidents_Dec21_updated.csv")
+  accidents_data <- read_csv("US_Accidents_Dec21_updated.csv")
 ```
 
 ```{r, cache = TRUE}
@@ -67,9 +67,13 @@ big_streets <- opq(bbox = c(-118.965,33.6818,-117.3367,34.4395), timeout = 100)%
 
 ```{r}
   accidents_data_LA <- accidents_data %>% 
-    filter((Start_Lng >= -118.9655) & (Start_Lng <= -117.3367) & (Start_Lat >= 33.6818) & (Start_Lat <= 34.4395)) %>%
-  select(Start_Lat:End_Lng)
+    filter((Start_Lng >= -118.9655) & (Start_Lng <= -117.3367) & (Start_Lat >= 33.6818) & (Start_Lat <= 34.4395))
 
+  accidents_data_LA_points <- accidents_data_LA %>% 
+    select(Start_Lat:End_Lng)
+```
+
+```{r}
   accidents_data_stpaul <- accidents_data %>% 
     filter(City == "Saint Paul") %>% 
     select(Start_Lat:End_Lng)
@@ -102,7 +106,7 @@ CA_map <- map_data("county", region = "california")
 
 ```{r, eval = FALSE}
   LA_bigstreets <- ggmap(LA_map) +
-    geom_point(data = accidents_data_LA, 
+    geom_point(data = accidents_data_LA_points, 
                aes(x = Start_Lng,
                    y = Start_Lat),
                size = .1,
@@ -119,7 +123,21 @@ CA_map <- map_data("county", region = "california")
   ggsave(filename = "images/LA_bigstreets.png", LA_bigstreets)
 ```
 
+```{r}
+  accidents_data_LA %>%
+    select(`Temperature(F)`, Start_Time) %>%
+    mutate(Temp = round(`Temperature(F)`), Year = year(Start_Time)) %>% 
+    group_by(Year, Temp) %>% 
+    summarize(count = n()) %>% 
+  ggplot(aes(x = Temp, fill = Temp, y = count)) +
+  transition_states(Year) +
+  geom_col()
+```
 
+```{r}
+  accidents_data_LA %>% 
+    select(
+```
 
 ```{r}
  LA_thoroughfares <-  ggmap(LA_map) +

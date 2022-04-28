@@ -1,6 +1,6 @@
 ---
-title: 'Accidents'
-author: "Seth Buesing"
+title: 'US Accidents (2016-2021) or: What the hell is going on in California?'
+author: "Seth Buesing, Jason White, Kai Yamanishi"
 output: 
   html_document:
     keep_md: TRUE
@@ -40,10 +40,19 @@ theme_set(theme_minimal())
 ```
 
 #Introduction
-  In our search for an interesting dataset to analyze we cam across a wonderfully organized table detailing traffic accidents in the contiguous United States over the last 5 years. What caught our interest in specific was looking at the evolution over time of crash statistics in specific states- most notably California. As the graph below shows, the number of accidents in California has been doubling each year, and we wanted to figure out just what was happening. The dataset we're working with is extraordinarily large, containing over 2.8 million accidents taken from automated traffic sensors and logged reports. Each accident has 47 columns of information.
+  In our search for an interesting dataset to analyze we came across a wonderfully organized table detailing traffic accidents in the contiguous United States over the last 5 years. What caught our interest in specific was looking at the evolution over time of crash statistics in specific states- most notably California. As the graph below shows, the number of accidents in California has been doubling each year, and we wanted to figure out just what was happening. The dataset we're working with is extraordinarily large, containing over 2.8 million accidents taken from automated traffic sensors and logged reports. Each accident has 47 columns of information.
+
+*Insert Graph 1 from Jason*
+
+#Data Collection
+  Our Data Collection process was pretty simple- we found the data set on [https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents]() and downloaded the csv file. We did run into some issues using this csv, however due to its sheer size (1.1 GB).
+
+#Analysis
+
+
 
 ```{r, cache = TRUE}
-  accidents_data <- read.csv("local/US_Accidents_Dec21_updated.csv")
+  accidents_data <- read_csv("local/US_Accidents_Dec21_updated.csv")
 ```  
   
 ```{r, cache = TRUE}
