@@ -51,7 +51,7 @@ accidents_ca <- accidents_clean %>%
   filter(State == "CA")
 ```
 
-#Introduction
+# Introduction
   In our search for an interesting dataset to analyze we came across a wonderfully organized table detailing traffic accidents in the contiguous United States over the last 5 years. What caught our interest in specific was looking at the evolution over time of crash statistics in specific states- most notably California. As the graph below shows, the number of accidents in California has been doubling each year, and we wanted to figure out just what was happening. The dataset we're working with is extraordinarily large, containing over 2.8 million accidents taken from automated traffic sensors and logged reports. Each accident has 47 columns of information.
 
 ```{r, eval=FALSE, echo=FALSE}
@@ -80,7 +80,7 @@ anim_save("accidents.gif")
 knitr::include_graphics("accidents.gif")
 ```
 
-#Data Collection
+# Data Collection
   Our Data Collection process was pretty simple- we found the data set on [https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents]() and downloaded the csv file. We did run into some issues using this csv, however due to its sheer size (1.1 GB).
 
 #Analysis
