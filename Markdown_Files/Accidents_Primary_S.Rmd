@@ -105,22 +105,22 @@ CA_map <- map_data("county", region = "california")
 ```
 
 ```{r, eval = FALSE}
-  LA_bigstreets <- ggmap(LA_map) +
-    geom_point(data = accidents_data_LA_points, 
-               aes(x = Start_Lng,
-                   y = Start_Lat),
-               size = .1,
-               alpha = .1,
-               color = "red") +
-  geom_sf(data = big_streets$osm_lines,
-          inherit.aes = FALSE,
-          color = "green",
-          size = .1,
-          alpha = .9)
-  
-  LA_bigstreets
-  
-  ggsave(filename = "images/LA_bigstreets.png", LA_bigstreets)
+LA_bigstreets <- ggmap(LA_map) +
+  geom_point(data = accidents_data_LA_points, 
+             aes(x = Start_Lng,
+                 y = Start_Lat),
+             size = .1,
+             alpha = .1,
+             color = "red") +
+geom_sf(data = big_streets$osm_lines,
+        inherit.aes = FALSE,
+        color = "green",
+        size = .1,
+        alpha = .9)
+
+LA_bigstreets
+
+ggsave(filename = "images/LA_bigstreets.png", LA_bigstreets)
 ```
 
 ```{r}

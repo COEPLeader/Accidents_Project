@@ -81,6 +81,8 @@ knitr::include_graphics("accidents.gif")
 
 #Analysis
 
+So, what would cause this pattern? The dataset we found had columns for factors such as whether the accident was in the day or the night, what the temperature and weather were like, and the type of accident. Time of day is a big factor in how often accidents occur, even though that effect is mitigated by the fact that fewer people are driving later in the day. We decided to look at the proportion of day to night accidents, still not expecting too much of a correlation.
+
 ```{r, cache = TRUE}
 accidents_ca %>%
   filter(is.na(Sunrise_Sunset)==FALSE) %>%
@@ -94,9 +96,11 @@ accidents_ca %>%
   unique() %>%
   ggplot() +
   geom_col(aes(x = year, y = percent_day_night, fill = Sunrise_Sunset)) +
-  labs(title = "Percent of Day/Night Accidents in California by Year", fill = "Time of Day") +
+  labs(title = "Percent of Day/Night Accidents in California by Year", fill = "Time of Day", y = "Year") +
   ylab("")
 ```
+
+Oddly enough, we do see an increase in the proportion of night accidents over the last 3 years. 
 
 ```{r, cache = TRUE}
 accidents_ca %>%
@@ -135,9 +139,44 @@ big_streets <- opq(bbox = c(-118.965,33.6818,-117.3367,34.4395), timeout = 100)%
   osmdata_sf()
 ```
 
-```{r, cache = TRUE}
-thoroughfares <- opq(bbox = c(-118.965,33.6818,-117.3367,34.4395), timeout = 100)%>%
-  add_osm_feature(key = "highway", 
-                  value = c("motorway")) %>%
-  osmdata_sf()
+```{r}
+  accidents_data_LA <- accidents_data %>% 
+    filter((Start_Lng >= -118.9655) & (Start_Lng <= -117.3367) & (Start_Lat >= 33.6818) & (Start_Lat <= 34.4395))
+
+  accidents_data_LA_points <- accidents_data_LA %>% 
+    select(Start_Lat:End_Lng)
 ```
+
+```{r}
+  LA_map <- get_stamenmap(
+     bbox = c(left = -118.9655 , bottom = 33.6818, right = -117.3367, top = 34.4395), 
+     maptype = "toner-lite",
+     zoom = 9)
+```
+
+```{r, eval = FALSE}
+  LA_bigstreets <- ggmap(LA_map) +
+    geom_point(data = accidents_data_LA_points, 
+               aes(x = Start_Lng,
+                   y = Start_Lat),
+               size = .1,
+               alpha = .1,
+               color = "red") +
+  labs(x = NULL,
+       y = NULL)
+  geom_sf(data = big_streets$osm_lines,
+          inherit.aes = FALSE,
+          color = "green",
+          size = .1,
+          alpha = .9) +
+    theme_map() +
+    theme(axis.text.x = "none",
+          axis.text.y = "none")
+  
+  ggsave(filename = "images/LA_bigstreets.png", LA_bigstreets)
+```
+
+```{r}
+  knitr::include_graphics("images/LA_bigstreets.png")
+```
+
