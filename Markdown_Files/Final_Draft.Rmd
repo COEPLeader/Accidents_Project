@@ -199,6 +199,7 @@ We also can choose to look at the types of accidents that are occuring.
     geom_text(aes(label = sub("_", " ", type)), vjust = -.2) +
     labs(x = NULL) +
     scale_y_continuous(n.breaks = 10) +
+    scale_fill_brewer(palette = "Spectral") +
     labs(y = "Proportion of all accidents",
          title = "Top 5 types of accidents by proportion of total accidents",
          subtitle = "{closest_state}") + 
