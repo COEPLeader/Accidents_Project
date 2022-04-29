@@ -107,20 +107,6 @@ accidents_clean %>%
   
 ```
 
-```{r, echo = FALSE, , fig.width=10, fig.height=8, fig.alt="Total car accidents in each Califronia county between 2016 and 2021."}
-accidents_clean %>%
-  filter(State == "CA") %>%
-  group_by(County) %>%
-  summarise(total_accidents = n()) %>%
-  ungroup() %>%
-  slice_max(total_accidents, n= 10) %>% 
-  ggplot(aes(y = fct_reorder(County, total_accidents), x = total_accidents)) +
-  geom_bar(stat = "identity") +
-  labs(y = "", x = "", title = "Total Car Accidents in California by County 2016-2021")
-
-
-```
-
 So, what would cause this pattern? The dataset we found had columns for factors such as whether the accident was in the day or the night, what the temperature and weather were like, and the type of accident. Time of day is a big factor in how often accidents occur, even though that effect is mitigated by the fact that fewer people are driving later in the day. We decided to look at the proportion of day to night accidents, still not expecting too much of a correlation.
 
 ```{r}
