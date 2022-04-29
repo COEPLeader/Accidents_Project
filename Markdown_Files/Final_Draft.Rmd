@@ -56,7 +56,7 @@ accidents_ca <- accidents_clean %>%
 #Introduction
   In our search for an interesting dataset to analyze we came across a wonderfully organized table detailing traffic accidents in the contiguous United States over the last 5 years. What caught our interest in specific was looking at the evolution over time of crash statistics in specific states- most notably California. As the graph below shows, the number of accidents in California has been doubling each year, and we wanted to figure out just what was happening. The dataset we're working with is extraordinarily large, containing over 2.8 million accidents taken from automated traffic sensors and logged reports. Each accident has 47 columns of information.
 
-```{r, eval=FALSE}
+```{r, eval=FALSE"}
   accidents_by_state <- accidents_clean %>%
   group_by(state, year) %>%
   mutate(num_accidents = n()) %>%
@@ -77,6 +77,9 @@ animate(accidents_by_state, fps = 15)
 
 ```{r}
 anim_save("accidents.gif")
+```
+
+```{r, fig.alt="Animation of US map showing number of car accidents by state from 2016 to 2019.}
 knitr::include_graphics("accidents.gif")
 ```
 
@@ -109,7 +112,7 @@ accidents_clean %>%
 
 So, what would cause this pattern? The dataset we found had columns for factors such as whether the accident was in the day or the night, what the temperature and weather were like, and the type of accident. Time of day is a big factor in how often accidents occur, even though that effect is mitigated by the fact that fewer people are driving later in the day. We decided to look at the proportion of day to night accidents, still not expecting too much of a correlation.
 
-```{r}
+```{r, fig.alt="Percent of day/night accidents in California by year."}
 accidents_ca %>%
   filter(is.na(Sunrise_Sunset)==FALSE) %>%
   group_by(year) %>%
@@ -127,7 +130,7 @@ accidents_ca %>%
 
 Oddly enough, we do see an increase in the proportion of night accidents over the last 3 years, though with a dip back down in 2021. Still no sign of what might be contributing to the exponential growth.
 
-```{r}
+```{r, fig.alt="Types of weather during accidents in California by year."}
 accidents_ca %>%
   filter(is.na(Weather_Condition)==FALSE) %>%
   group_by(year) %>%
