@@ -31,6 +31,7 @@ library(transformr)
 library(osmdata)
 library(reticulate)
 library(knitr)
+library(scales)
 theme_set(theme_minimal())
 ```
 
@@ -66,6 +67,7 @@ accidents_ca <- accidents_clean %>%
   add_row(year = "2017", state = "north dakota", num_accidents = 0) %>%
   ggplot() +
   geom_map(map = states_map, aes(map_id = state, fill = num_accidents, group = year)) +
+  scale_fill_continuous(labels = comma) +
   expand_limits(x = states_map$long, y = states_map$lat) + 
   theme_map() +
   labs(title = "Number of Car Accidents by State, 2016-2021", subtitle = "Year: {closest_state}", fill = "Number of Accidents") +
