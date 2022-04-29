@@ -130,6 +130,16 @@ accidents_ca %>%
   scale_fill_brewer(palette = "Spectral")
 ```
 
+```{r, fig.alt="Graph of the numebr of accidents occuring each hour of the day, coloured by the year they occured in."}
+accidents_data %>% 
+  mutate(hour = hour(Start_Time), year = year(Start_Time)) %>% 
+  group_by(hour, year) %>% 
+  summarise(accidents = n()) %>% 
+  ggplot(aes(x = hour, y = accidents, fill = year)) +
+  geom_bar(stat = "identity") +
+  scale_fill_distiller(palette = "Spectral")
+```
+
 Oddly enough, we do see an increase in the proportion of night accidents over the last 3 years, though with a dip back down in 2021. Still no sign of what might be contributing to the exponential growth.
 
 ```{r, fig.alt="Types of weather during accidents in California by year."}
