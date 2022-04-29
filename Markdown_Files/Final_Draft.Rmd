@@ -130,7 +130,9 @@ accidents_ca %>%
   scale_fill_brewer(palette = "Spectral")
 ```
 
-```{r, fig.alt="Graph of the numebr of accidents occuring each hour of the day, coloured by the year they occured in."}
+Oddly enough, we do see an increase in the proportion of night accidents over the last 3 years, though with a dip back down in 2021. Still no sign of what might be contributing to the exponential growth, so we decided to look a bit further into detail, but as the graph below shows the relative proportions of accidents haven't appreciably changed over time.
+
+```{r, fig.alt="Graph of the number of accidents occuring each hour of the day, coloured by the year they occured in."}
 accidents_data %>% 
   mutate(hour = hour(Start_Time), year = year(Start_Time)) %>% 
   group_by(hour, year) %>% 
@@ -140,7 +142,7 @@ accidents_data %>%
   scale_fill_distiller(palette = "Spectral")
 ```
 
-Oddly enough, we do see an increase in the proportion of night accidents over the last 3 years, though with a dip back down in 2021. Still no sign of what might be contributing to the exponential growth.
+Next we decided to look at possible effects of changing weather on accidents, but again came up empty.
 
 ```{r, fig.alt="Types of weather during accidents in California by year."}
 accidents_ca %>%
@@ -176,7 +178,7 @@ accidents_ca %>%
   scale_fill_brewer(palette = "Spectral")
 ```
 
-We also can choose to look at the types of accidents that are occuring 
+We also can choose to look at the types of accidents that are occuring. 
 
 ```{r, fig.width = 10, fig.height = 8}
   accidents_by_type <- accidents_data_LA %>% 
