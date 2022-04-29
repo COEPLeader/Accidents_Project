@@ -136,7 +136,7 @@ ggsave(filename = "images/LA_bigstreets.png", LA_bigstreets)
 
 ```{r}
   accidents_data_LA %>% 
-    select(
+    select()
 ```
 
 ```{r}
@@ -165,20 +165,49 @@ ggsave(filename = "images/LA_bigstreets.png", LA_bigstreets)
 ```
 
 ```{r, fig.width = 10, fig.height = 8}
-  accidents_data_LA %>% 
+  accidents_by_type <- accidents_data_LA %>% 
     mutate(Year = year(Start_Time)) %>% 
     group_by(Year) %>% 
-    mutate(across(Amenity:Turning_Loop, ~ . == "True")) %>% 
-    summarize(across(Amenity:Turning_Loop,sum)) %>% 
+    mutate(total = n()) %>%
+    mutate(across(Amenity:Turning_Loop,sum)) %>% 
+    select(Amenity:Turning_Loop, Year, total) %>% 
+    distinct() %>%
     pivot_longer(Amenity:Turning_Loop, values_to = "count", names_to = "type") %>% 
-    group_by(Year) %>% 
-    slice_max(count, n = 5) %>% 
+    group_by(Year, type) %>% 
+    summarize(prop = round(count/total, digits = 3)) %>% 
+    slice_max(prop, n = 5) %>% 
     arrange(Year) %>% 
     mutate(rank = 1:n()) %>% 
-  ggplot(aes(x = factor(rank), y = count)) +
-    geom_col() +
-    geom_text(aes(label = type +))+
+  ggplot(aes(x = factor(rank), y = prop, group = type)) +
+    geom_col(aes(fill = type)) +
+    geom_text(aes(label = type), vjust = .1) +
+    labs(x = NULL) +
+    scale_y_continuous(n.breaks = 10) +
+    labs(y = "Proportion of all accidents",
+         title = "Top 5 types of accidents by proportion of total",
+         subtitle = "{closest_state}") + 
+    theme(axis.text.x = element_blank(),
+          legend.position = "none") +
     transition_states(Year)
+    
+
+    animate(accidents_by_type, fps = 30, duration = 10)
+    anim_save("causes_bar_graph.gif")
 ```
 
+```{r}
+accidents_data_LA %>% 
+    mutate(Year = year(Start_Time)) %>% 
+    group_by(Year) %>% 
+    mutate(total = n()) %>%
+    mutate(across(Amenity:Turning_Loop,sum)) %>% 
+    select(Amenity:Turning_Loop, Year, total) %>% 
+    distinct() %>%
+    pivot_longer(Amenity:Turning_Loop, values_to = "count", names_to = "type") %>% 
+    group_by(Year, type) %>% 
+    summarize(prop = round(count/total, digits = 3)) %>% 
+    arrange(Year) %>% 
+    mutate(rank = 1:n()) %>% 
+    summarize(`Total Proportion`  = sum(prop))
+```
 
