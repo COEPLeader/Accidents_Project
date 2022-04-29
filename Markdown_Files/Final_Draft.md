@@ -29,6 +29,7 @@ library(gifski)
 library(transformr)
 library(osmdata)
 library(reticulate)
+library(knitr)
 theme_set(theme_minimal())
 ```
 
@@ -115,16 +116,10 @@ accidents_clean %>%
   geom_map(map = CA_map, aes(map_id = County, fill = total_accidents)) +
   expand_limits(x = CA_map$long, y = CA_map$lat) +
   labs(x = "", y = "", fill = "Total Accidents", title = "Accidents by County 2016-2021") +
-  theme_map() +
-  
+  theme_map()
 ```
 
-```
-## Error: <text>:12:0: unexpected end of input
-## 10:   theme_map() +
-## 11:   
-##    ^
-```
+![](Final_Draft_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 <img src="Final_Draft_files/figure-html/unnamed-chunk-8-1.png" title="Total car accidents in each Califronia county between 2016 and 2021." alt="Total car accidents in each Califronia county between 2016 and 2021."  />
 
