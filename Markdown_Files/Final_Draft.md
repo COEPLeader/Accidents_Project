@@ -58,12 +58,9 @@ Next we decided to look at possible effects of changing weather on accidents, bu
 
 We also can choose to look at the types of accidents that are occuring. 
 
-![](Final_Draft_files/figure-html/unnamed-chunk-15-1.gif)<!-- -->
 
 
-```
-## Error in eval(expr, envir, enclos): object 'knitr' not found
-```
+<img src="causes_bar_graph.gif" title="Bar graph showing the top 5 associated cause tags provided for each accident, and the proportion of total accidents each made up. The graph is animated over the 6 year span, and we see that the accidents at Junctions were the largest proportion recorded, followed increasingly closely by Traffic Signals as time went on." alt="Bar graph showing the top 5 associated cause tags provided for each accident, and the proportion of total accidents each made up. The graph is animated over the 6 year span, and we see that the accidents at Junctions were the largest proportion recorded, followed increasingly closely by Traffic Signals as time went on."  />
 
 We see that the spread of causes for accidents grows quite substantially as time goes on, since Traffic Signal accidents start to rival Junction accidents. Looking at the total proportion of all reported accidents that fall under at least one of these categories (for all of the causes available) we get less than 1; if anything the total should be greater than 1 since there are some accidents that fall under two categories. Basically, what we can conclude from this is that the accident reporting that this dataset is built on is incomplete, and there are a lot of unclassified accidents in this dataset. Unfortunately, this isn't the answer we were looking for, but it still gives us some information about the changes occurring in types of accidents over time. 
 
