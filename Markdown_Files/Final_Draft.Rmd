@@ -27,11 +27,15 @@ library(leaflet)
 library(ggthemes)
 library(gganimate)
 library(gifski)
+library(plotly)
 library(transformr)
 library(osmdata)
 library(reticulate)
 library(knitr)
 library(scales)
+library(gt)
+library(patchwork)
+library(paletteer)
 theme_set(theme_minimal())
 ```
 
@@ -45,7 +49,7 @@ accidents_clean <- accidents_data %>%
   mutate(state = state.name[match(State, state.abb)]) %>%
   mutate(state = str_to_lower(state)) %>%
   filter(is.na(state)==FALSE) %>%
-  mutate(year = substring(Start_Time, 0, 4))
+  mutate(year = substr(Start_Time, 0, 4))
 ```  
 
 ```{r}
@@ -55,8 +59,10 @@ accidents_ca <- accidents_clean %>%
 
 # Introduction
   In our search for an interesting dataset to analyze we came across a wonderfully organized table detailing traffic accidents in the contiguous United States over the last 5 years. What caught our interest in specific was looking at the evolution over time of crash statistics in specific states- most notably California. As the graph below shows, the number of accidents in California has been doubling each year, and we wanted to figure out just what was happening. The dataset we're working with is extraordinarily large, containing over 2.8 million accidents taken from automated traffic sensors and logged reports. Each accident has 47 columns of information.
+  
+  Car accidents are interesting in their ubiquity. Roads cover the majority of the United States, and in most cases one wouldn't expect too much regional variation- sure snowy states might have higher rates of accidents during winter, but the physical conditions that might cause more accidents are often widespread or have analogues in other climates. This leaves us to consider the sociological factor which may be behind differences in driving safety in addition to more tangible dangers on the road.
 
-```{r, eval=FALSE}
+```{r, eval = FALSE, fig.width = 16}
 accidents_by_state <- accidents_clean %>%
   group_by(state, year) %>%
   mutate(num_accidents = n()) %>%
@@ -65,9 +71,9 @@ accidents_by_state <- accidents_clean %>%
   arrange(year) %>%
   ungroup() %>%
   add_row(year = "2017", state = "north dakota", num_accidents = 0) %>%
-  ggplot() +
+ggplot() +
   geom_map(map = states_map, aes(map_id = state, fill = num_accidents, group = year)) +
-  scale_fill_continuous(labels = scales::comma) +
+  scale_fill_distiller(palette = "Spectral", labels = scales::comma) +
   expand_limits(x = states_map$long, y = states_map$lat) + 
   theme_map() +
   labs(title = "Number of Car Accidents by State, 2016-2021", subtitle = "Year: {closest_state}", fill = "Number of Accidents") +
@@ -79,16 +85,19 @@ animate(accidents_by_state, fps = 15)
 anim_save("accidents.gif")
 ```
 
-```{r, fig.alt="Animation of US map showing number of car accidents by state from 2016 to 2019."}
+```{r, fig.alt="Animation of US map showing number of car accidents by state from 2016 to 2019.", fig.width = 16}
 knitr::include_graphics("accidents.gif")
 ```
 
 # Data Collection
-  Our Data Collection process was pretty simple- we found the data set on [https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents]() and downloaded the csv file. We did run into some issues using this csv, however due to its sheer size (1.1 GB). The fun thing about this data set is that it contains so many details about each crash, which allows us to look for correlations without them being spoon-fed to us. Additionally, the types of data provided allowed us to explore quite a few different types of visualizations: the time was given for each crash, as well as location plus details on the cause of the crash.
+  Our Data Collection process was pretty simple- we found the data set on [https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents]() and downloaded the csv file. We did run into some issues using this csv, due to its sheer size (1.1 GB). The fun thing about this data set is that it contains so many details about each crash, which allows us to look for correlations without them being spoon-fed to us. Additionally, the types of data provided allowed us to explore quite a few different types of visualizations: the time was given for each crash, as well as location plus details on the cause of the crash.
+    While the Data Collection was relatively straightforward, the manipulations took a little more work. 
 
 # Analysis
 
   After deciding to focus in on California, we wanted to take a closer look at the distribution of accidents within the state. Unsurprisingly, this showed that the vast majority of accidents were clustered in Los Angeles, and to a lesser extent the south of the state in general. The second map plots all of the accidents recorded in the data set over a map of Los Angeles.This shows the clustering of accidents in the busier parts of the city and freeways.
+  
+## Spacial trends
 
 ```{r}
 CA_map <- map_data("county", region = "california") %>%
@@ -97,25 +106,65 @@ CA_map <- map_data("county", region = "california") %>%
 ```
 
 ```{r}
-accidents_clean %>%
+accidents_county <- accidents_clean %>%
   filter(State == "CA") %>%
   group_by(County) %>%
-  summarise(total_accidents = n()) %>%
+  mutate(Accidents = n()) %>%
+  group_by(County, year) %>% 
+  mutate(annual_accidents = n()) %>% 
+  select(County, Accidents, year, annual_accidents) %>% 
+  distinct() %>% 
+  pivot_wider(names_from = year, values_from = annual_accidents, values_fill = 0, names_prefix = "Accidents ") %>% 
   ungroup() %>%
   ggplot() +
-  geom_map(map = CA_map, aes(map_id = County, fill = total_accidents)) +
+  geom_map(map = CA_map, aes(map_id = County, fill = Accidents)) +
   expand_limits(x = CA_map$long, y = CA_map$lat) +
   labs(x = "", y = "", fill = "Total Accidents", title = "Accidents by County 2016-2021") +
+  scale_fill_distiller(palette = "Spectral") +
   theme_map()
   
+  table <- accidents_clean %>%
+  filter(State == "CA") %>%
+  group_by(County) %>%
+  mutate(Accidents = n()) %>%
+  group_by(County, year) %>% 
+  mutate(annual_accidents = n()) %>% 
+  select(County, Accidents, year, annual_accidents) %>% 
+  distinct() %>% 
+  arrange(year) %>% 
+  pivot_wider(names_from = year, values_from = annual_accidents, values_fill = 0,) %>% 
+  ungroup() %>% 
+  slice_max(Accidents, n = 10) %>% 
+  gt(rowname_col = "year") %>% 
+  tab_header(title = "Top 10 Accident-Prone Counties") %>% 
+  tab_options(row.striping.background_color = "lightblue", heading.background.color = "#C63F41") %>%
+  opt_row_striping(row_striping = TRUE)
+    
+  accidents_county
+  table
 ```
+
+Even in other large counties we can notice the near exponential growth in accidents.
+
+## Trends in LA
+
+  Within the bounds of LA we wanted to get a good sense of the kinds of areas that attracted accidents. Unsurprisingly, we have large clusters along pretty much every major roadway, but we do see a non-zero number of accidents in residential areas too. 
 
 ```{r}
   accidents_data_LA <- accidents_data %>% 
-    filter((Start_Lng >= -118.9655) & (Start_Lng <= -117.3367) & (Start_Lat >= 33.6818) & (Start_Lat <= 34.4395))
+    filter((Start_Lng >= -118.9655) & (Start_Lng <= -117.3367) & (Start_Lat >= 33.6818) & (Start_Lat <= 34.4395)) %>%
+  mutate(year = year(Start_Time))
 
   accidents_data_LA_points <- accidents_data_LA %>% 
-    select(Start_Lat:End_Lng)
+    select(Start_Time:End_Lng) %>% 
+    mutate(year = year(Start_Time))
+```
+
+```{r}
+thoroughfares <- opq(bbox = c(-118.965,33.6818,-117.3367,34.4395), timeout = 100)%>%
+  add_osm_feature(key = "highway", 
+                  value = c("motorway")) %>%
+  osmdata_sf()
 ```
 
 ```{r}
@@ -126,39 +175,41 @@ accidents_clean %>%
 ```
 
 ```{r, eval = FALSE}
-  LA_bigstreets <- ggmap(LA_map) +
+  LA_thoroughfares <- ggmap(LA_map) +
     geom_point(data = accidents_data_LA_points, 
                aes(x = Start_Lng,
                    y = Start_Lat),
                size = .1,
                alpha = .1,
                color = "red") +
-  labs(x = NULL,
+  labs(title = "Accidents in the greater LA area",
+       x = NULL,
        y = NULL) +
-  geom_sf(data = big_streets$osm_lines,
+  geom_sf(data = thoroughfares$osm_lines,
           inherit.aes = FALSE,
           color = "green",
-          size = .1,
+          size = .3,
           alpha = .9) +
-    theme_map() +
-    theme(axis.text.x = "none",
-          axis.text.y = "none")
+    theme_map() 
   
-  ggsave(filename = "images/LA_bigstreets.png", LA_bigstreets)
+  ggsave(filename = "images/LA_thoroughfares.png", LA_thoroughfares)
 ```
 
-```{r, fig.alt="A map of traffic accidents in Los Angeles, every red dot is one accident."}
-knitr::include_graphics("images/LA_bigstreets.png")
+```{r, fig.alt="A map of traffic accidents in Los Angeles, showing their concentration around major thoroughfares."}
+knitr::include_graphics("images/LA_thoroughfares.png")
 ```
 
-So, what could be causing this pattern of exponential growth? The dataset we found had columns for factors such as whether the accident was in the day or the night, what the temperature and weather were like, and the type of accident.Time of day is a big factor in how often accidents occur, even though that effect is mitigated by the fact that fewer people are driving later in the day. We first decided to look at the proportion of day to night accidents, still not expecting too much of a correlation.
+  On this graph, the green lines show the primary motorways through the metropolitan area, and each red dot represents one accident. While this map is not an effective quantitative tool, qualitatively it helps impress the sheer density of accidents throughout Los Angeles.
+
+## Causes of accidents
+
+  So, what could be causing this pattern of exponential growth? The dataset we found had columns for factors such as whether the accident was in the day or the night, what the temperature and weather were like, and the type of accident.Time of day is a big factor in how often accidents occur, even though that effect is mitigated by the fact that fewer people are driving later in the day. We first decided to look at the proportion of day to night accidents, still not expecting too much of a correlation.
 
 ```{r, fig.alt="Percent of day/night accidents in California by year."}
 accidents_ca %>%
   filter(is.na(Sunrise_Sunset)==FALSE) %>%
   group_by(year) %>%
   mutate(num_accidents = n()) %>%
-  ungroup() %>%
   group_by(year, Sunrise_Sunset) %>%
   mutate(percent_day_night = n()/num_accidents) %>%
   ungroup() %>%
@@ -166,12 +217,11 @@ accidents_ca %>%
   unique() %>%
   ggplot() +
   geom_col(aes(x = year, y = percent_day_night, fill = Sunrise_Sunset)) +
-  labs(title = "Percent of Day/Night Accidents in California by Year", fill = "Time of Day") +
-  ylab("") +
+  labs(title = "Percent of Day/Night Accidents in California by Year", fill = "Time of Day", x = NULL, y = NULL) +
   scale_fill_brewer(palette = "Spectral")
 ```
 
-Oddly enough, we do see an increase in the proportion of night accidents over the last 3 years, though with a dip back down in 2021. This isn't sufficient to say anything meaningful on its own though, so we decided to look a bit further into detail. This next graph shows the number of accidents broken down by hour of the day, and colored by the year in which they occurred. It revealed that while the binary proportions shown in the last graph have been shifting, in reality this has only meant things shifting  few minutes later in the day. The two visible spikes correlate well with morning and evening rush hours.
+  Oddly enough, we do see an increase in the proportion of night accidents over the last 3 years, though with a dip back down in 2021. This isn't sufficient to say anything meaningful on its own though, so we decided to look a bit further into detail. This next graph shows the number of accidents broken down by hour of the day, and colored by the year in which they occurred. It revealed that while the binary proportions shown in the last graph have been shifting, in reality this has only meant things shifting  few minutes later in the day. The two visible spikes correlate well with morning and evening rush hours.
 
 ```{r, fig.alt="Graph of the number of accidents occuring each hour of the day, coloured by the year in which they occured."}
 accidents_data %>% 
@@ -180,11 +230,15 @@ accidents_data %>%
   summarise(accidents = n()) %>% 
   ggplot(aes(x = hour, y = accidents, fill = year)) +
   geom_bar(stat = "identity") +
+  labs(title = "Accident distribution throughout an average day",
+       x = "Time of Day",
+       y = "Accident Count",
+       fill = "Year") +
   scale_fill_distiller(palette = "Spectral") +
   theme_classic()
 ```
 
-Next we decided to look at possible effects of changing weather on accidents. While there is an increase in the percentage of clear weather, there's no indication this is correlated with the increase in accidents.
+Next we decided to look at possible effects of changing weather on accidents. While there is an increase in the percentage of clear weather, there's no indication this is correlated with the increase in accidents. We do get a tangential view into the droughts of California by the continuing decrease in rain.
 
 ```{r, fig.alt="Types of weather during accidents in California by year."}
 accidents_ca %>%
@@ -220,9 +274,9 @@ accidents_ca %>%
   scale_fill_brewer(palette = "Spectral")
 ```
 
-With environmental factors not showing anything interesting, we next chose to look at the types of accidents that are occuring.
+With environmental factors not showing anything interesting, we next chose to look at the causes cited for each accident. 
 
-```{r, fig.width = 10, fig.height = 8, eval = FALSE}
+```{r, fig.width = 16, eval = FALSE}
 accidents_by_type <- accidents_data_LA %>% 
     mutate(Year = year(Start_Time)) %>% 
     group_by(Year) %>% 
@@ -235,7 +289,7 @@ accidents_by_type <- accidents_data_LA %>%
     summarize(prop = round(count/total, digits = 3)) %>% 
     slice_max(prop, n = 5) %>% 
     arrange(Year) %>% 
-    mutate(rank = 1:n()) %>% 
+    mutate(rank = 1:n() ) %>% 
   ggplot(aes(x = factor(rank), y = prop, group = type)) +
     geom_col(aes(fill = type)) +
     geom_text(aes(label = sub("_", " ", type)), vjust = -.2) +
@@ -254,12 +308,16 @@ accidents_by_type <- accidents_data_LA %>%
     anim_save("causes_bar_graph.gif")
 ```
 
-```{r, fig.alt = "Bar graph showing the top 5 associated cause tags provided for each accident, and the proportion of total accidents each made up. The graph is animated over the 6 year span, and we see that the accidents at Junctions were the largest proportion recorded, followed increasingly closely by Traffic Signals as time went on."}
+```{r, fig.alt = "Bar graph showing the top 5 associated cause tags provided for each accident, and the proportion of total accidents each made up. The graph is animated over the 6 year span, and we see that the accidents at Junctions were the largest proportion recorded, followed increasingly closely by Traffic Signals as time went on.", fig.width = 16}
 knitr::include_graphics("causes_bar_graph.gif")
 ```
 
-We see that the spread of causes for accidents grows quite substantially as time goes on, as Traffic Signal accidents started to rival Junction accidents. This could be interesting, but looking at the total proportion of all reported accidents that fall under at least one of these categories (for all of the causes available) and adding them up we get substantially less than 1; if anything the total should be greater than 1 since there are some accidents that fall under two categories. What we can conclude from this is that the accident reporting that this data set is built on is incomplete, and there are a lot of unclassified accidents in this data set. Unfortunately, this isn't the answer we were looking for, but it still gives us some information about the changes occurring in types of accidents over time, as at least among reported accidents the relative frequency of Junction accidents has fallen substantially.
+  We see that the spread of causes for accidents grows quite substantially as time goes on, as Traffic Signal accidents started to rival Junction accidents. This could be interesting, but looking at the total proportion of all reported accidents that fall under at least one of these categories (for all of the causes available) and adding them up we get substantially less than 1; if anything the total should be greater than 1 since there are some accidents that fall under two categories. What we can conclude from this is that the accident reporting that this data set is built on is incomplete, and there are a lot of unclassified accidents in this data set. Unfortunately, this isn't the answer we were looking for, but it still gives us some information about the changes occurring in types of accidents over time, as at least among reported accidents the relative frequency of Junction accidents has fallen substantially.
+  
+  Analysis of the type of accident clearly can be traced back in part to the environment around the incident, but certain mindsets or traffic patterns due to any number of things can be just as important. This is where we move a little further into the potential sociological components driving the increase in total accidents, and our data is sufficient for little more than speculation. 
 
 # Conclusions
 
-So where does all of this leave us? At least in all of the data we have, there are no real clues to the reasons behind the continued growth of the number of car accidents occurring in California. This is remarkable given the sustained and exponential nature of the growth even during the relatively slow period of the Covid-19 pandemic. While we have failed to pull any explanations from this data set, it does give us enough information to note that if this trend continues, within just a few years the average Californian will have to get into multiple accidents a day just to keep up appearances. 
+  So where does all of this leave us? At least in all of the data we have, there are no real clues to the reasons behind the continued growth of the number of car accidents occurring in California. This is remarkable given the sustained and exponential nature of the growth even during the relatively slow period of the Covid-19 pandemic. While we have failed to pull any explanations from this data set, it does give us enough information to note that if this trend continues, within just a few years the average Californian will have to get into multiple accidents a day just to keep up appearances. 
+
+  In all seriousness, none of the data provided in the set was enough to give a convincing answer as to why Californian traffic is so dangerous, but this in itself is a result! We have shown that the physical factors have little influence in this exponential growth, (at least, shown within reason for the scope of this project.) A future project along these lines that might be interesting would be looking at a more comprehensive dataset. More enlightening would be a social survey or study to determine driving behaviors based on locale. For the time being, we will try to be happy with the information we've found so far.
